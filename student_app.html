@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель студента</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+        }
+        .status-btn {
+            transition: transform 0.1s ease-in-out;
+        }
+        .status-btn:active {
+            transform: scale(0.95);
+        }
+        .toggle-checkbox {
+            transition: transform 0.2s ease-in-out;
+        }
+        .toggle-checkbox:checked {
+            transform: translateX(1.5rem);
+            border-color: #4ade80;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4ade80;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8">
+
+    <div class="w-full max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6 md:p-8">
+        <div class="text-center">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Мой статус</h1>
+            <p class="text-gray-500 mt-2">Обновите свой статус для родителей.</p>
+        </div>
+
+        <!-- Custom Status Input -->
+        <div class="mt-8">
+            <label for="customStatus" class="block text-sm font-medium text-gray-700 mb-1">Свой статус:</label>
+            <div class="flex items-center space-x-2">
+                <input type="text" id="customStatus" class="flex-grow w-full px-4 py-2 text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Например, иду в магазин...">
+                <button id="updateCustomStatus" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 status-btn">
+                    OK
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Select Buttons -->
+        <div class="mt-6">
+            <p class="block text-sm font-medium text-gray-700 mb-2">Быстрые статусы:</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <button class="status-btn w-full py-3 px-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300" data-status="На учёбе 📚">На учёбе 📚</button>
+                <button class="status-btn w-full py-3 px-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300" data-status="Отдыхаю ☕️">Отдыхаю ☕️</button>
+                <button class="status-btn w-full py-3 px-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300" data-status="Сплю 😴">Сплю 😴</button>
+                <button class="status-btn w-full py-3 px-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300" data-status="В пути 🚶‍♂️">В пути 🚶‍♂️</button>
+                <button class="status-btn w-full py-3 px-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300" data-status="Ем 🍕">Ем 🍕</button>
+                <button class="status-btn w-full py-3 px-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300" data-status="Всё в порядке ✅">Всё в порядке ✅</button>
+            </div>
+        </div>
+
+        <!-- Call Availability Toggle -->
+        <div class="mt-8 flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+            <span class="text-lg font-medium text-gray-800">Могу говорить?</span>
+            <div class="relative inline-block w-14 h-8 align-middle select-none">
+                <input type="checkbox" name="toggle" id="callToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer top-1 left-1"/>
+                <label for="callToggle" class="toggle-label block overflow-hidden h-8 rounded-full bg-gray-300 cursor-pointer"></label>
+            </div>
+        </div>
+        
+        <div id="statusMessage" class="text-center mt-4 text-green-600 font-semibold h-6"></div>
+
+        <!-- НОВЫЙ БЛОК: Отображение текущего статуса для студента -->
+        <div class="mt-6 border-t pt-6">
+            <h2 class="text-base font-semibold text-gray-700 text-center">Текущий статус (как видят родители):</h2>
+            <div id="currentStatusDisplay" class="mt-3 p-4 bg-gray-50 rounded-lg text-center">
+                <p class="text-xl font-medium text-gray-800 break-words">Загрузка...</p>
+                <p class="text-sm text-gray-500 mt-1 font-mono">--:--:--</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6-u1gFwpSzIxxtFMv9fZTg-4MugyJlbk",
+            authDomain: "status-viewer-7695d.firebaseapp.com",
+            projectId: "status-viewer-7695d",
+            storageBucket: "status-viewer-7695d.appspot.com",
+            messagingSenderId: "430748222191",
+            appId: "1:430748222191:web:d3625dd9878140c7c0511a",
+            measurementId: "G-X61112HJHQ"
+        };
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        let db;
+        let lastSentStatus = "Всё в порядке ✅"; 
+        const statusMessage = document.getElementById('statusMessage');
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            statusMessage.textContent = 'Подключено!';
+            setTimeout(() => {
+                statusMessage.textContent = '';
+            }, 1500);
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+            statusMessage.textContent = 'Ошибка подключения к Firebase!';
+            statusMessage.style.color = 'red';
+        }
+
+        const customStatusInput = document.getElementById('customStatus');
+        const updateCustomStatusBtn = document.getElementById('updateCustomStatus');
+        const quickStatusButtons = document.querySelectorAll('.status-btn[data-status]');
+        const callToggle = document.getElementById('callToggle');
+        
+        async function updateStatus(statusText) {
+            if (!db) {
+                 statusMessage.textContent = 'Ошибка: база данных не подключена.';
+                 statusMessage.style.color = 'red';
+                 return;
+            }
+            if (!statusText || statusText.trim() === '') {
+                return; 
+            }
+            
+            lastSentStatus = statusText;
+            const canAcceptCall = callToggle.checked;
+            const timestamp = new Date();
+
+            try {
+                const statusRef = doc(db, "studentStatus", "current_status");
+                await setDoc(statusRef, {
+                    status: statusText,
+                    canCall: canAcceptCall,
+                    updatedAt: timestamp
+                });
+
+                statusMessage.textContent = `Статус обновлен: "${statusText}"`;
+                statusMessage.style.color = 'green';
+                setTimeout(() => statusMessage.textContent = '', 3000);
+
+            } catch (error) {
+                console.error("Error writing document: ", error);
+                statusMessage.textContent = 'Ошибка при обновлении статуса.';
+                statusMessage.style.color = 'red';
+            }
+        }
+        
+        async function fetchInitialStatus() {
+            if (!db) return;
+            const statusRef = doc(db, "studentStatus", "current_status");
+            const docSnap = await getDoc(statusRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                lastSentStatus = data.status || "Всё в порядке ✅";
+                callToggle.checked = data.canCall || false;
+            }
+        }
+        fetchInitialStatus();
+
+        updateCustomStatusBtn.addEventListener('click', () => {
+            updateStatus(customStatusInput.value);
+            customStatusInput.value = '';
+        });
+        
+        customStatusInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                 updateStatus(customStatusInput.value);
+                 customStatusInput.value = '';
+            }
+        });
+
+        quickStatusButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const status = button.getAttribute('data-status');
+                updateStatus(status);
+            });
+        });
+        
+        callToggle.addEventListener('change', () => {
+            updateStatus(lastSentStatus);
+        });
+
+        // НОВЫЙ КОД: Real-time отображение статуса для студента
+        const currentStatusElement = document.querySelector('#currentStatusDisplay p:first-child');
+        const currentTimestampElement = document.querySelector('#currentStatusDisplay p:last-child');
+
+        if (db) {
+            const statusRef = doc(db, "studentStatus", "current_status");
+            onSnapshot(statusRef, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    const statusText = data.status || "Статус не установлен";
+                    const callText = data.canCall ? " (может говорить)" : " (занят)";
+                    currentStatusElement.textContent = statusText + callText;
+
+                    if (data.updatedAt && data.updatedAt.toDate) {
+                        const date = data.updatedAt.toDate();
+                        currentTimestampElement.textContent = date.toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
+                    } else {
+                        currentTimestampElement.textContent = "Нет данных о времени";
+                    }
+                } else {
+                    currentStatusElement.textContent = "Статус еще не был установлен.";
+                    currentTimestampElement.textContent = "";
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
